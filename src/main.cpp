@@ -1,6 +1,9 @@
 #include <Arduino.h>
 #include <Adafruit_GFX.h>
 #include <MCUFRIEND_kbv.h>
+#include <TouchScreen.h>
+
+#include "Fonts/FreeSans9pt7b.h"
 
 #define WHITE 0xFFFF
 #define BLACK 0x0000
@@ -10,10 +13,13 @@
 #define CYAN 0x07FF
 #define MAGENTA 0xF81F
 #define YELLOW 0xFFE0
+#define O_COLOR 0xA000
+#define X_COLOR 0x1292
+
 
 MCUFRIEND_kbv tft;
 
-const uint16_t PROGMEM O[2025] ={
+const uint16_t PROGMEM O_img[2025] ={
 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0020, 0x0800, 0x1800, 0x3800, 0x5800,   // 0x0010 (16) pixels
 0x7000, 0x8000, 0x8800, 0x9000, 0x9800, 0x9800, 0x9800, 0xA000, 0xA000, 0x9800, 0x8800, 0x8000, 0x7000, 0x5000, 0x3000, 0x1800,   // 0x0020 (32) pixels
 0x1000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,   // 0x0030 (48) pixels
@@ -143,7 +149,7 @@ const uint16_t PROGMEM O[2025] ={
 0x0020, 0x0020, 0x0000, 0x0800, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000
 };
 
-const uint16_t PROGMEM X[2025] ={
+const uint16_t PROGMEM X_img[2025] ={
 0x0000, 0x0022, 0x0085, 0x0108, 0x016A, 0x098B, 0x014A, 0x0109, 0x00A5, 0x0043, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,   // 0x0010 (16) pixels
 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,   // 0x0020 (32) pixels
 0x0000, 0x0000, 0x0000, 0x0021, 0x0084, 0x0107, 0x016A, 0x09AC, 0x094A, 0x00E7, 0x0064, 0x0001, 0x0000, 0x0022, 0x0084, 0x00E7,   // 0x0030 (48) pixels
@@ -273,44 +279,81 @@ const uint16_t PROGMEM X[2025] ={
 0x00A5, 0x0129, 0x018B, 0x09AC, 0x09AC, 0x096A, 0x00E7, 0x0064, 0x0022
 };
 
+char16_t board[3][3] = {
+    {' ', ' ', ' '},
+    {' ', ' ', ' '},
+    {' ', ' ', ' '}
+};
+
+char currentPlayer = 'O';
 
 // put function declarations here:
-void drawBoard(){
-  tft.fillScreen(BLACK);
-  //gora dol
-  tft.fillRect(84,15,3,210,WHITE);
-  tft.fillRect(154,15,3,210,WHITE);
-  //lewo prawo
-  tft.fillRect(15,84,210,3,WHITE);
-  tft.fillRect(15,154,210,3,WHITE);
+void drawBoard();
+
+void drawInfoArea(){
+  tft.fillRect(230,0,100,240,WHITE);
 }
 
-void drawX(uint16_t x,uint16_t y){
-  tft.drawRGBBitmap(x,y,X,45,45);
-}
+void drawX(uint16_t,uint16_t);
 
-void size_of_screen(){
-  uint16_t width = tft.width();
-  uint16_t height = tft.height();
-  Serial.println(width);
-  Serial.println(height);
-}
+void drawO(uint16_t,uint16_t);
+
+void printTurn();
+
+void changePlayer();
 
 void setup() {
   // put your setup code here, to run once:
   Serial.begin(9600);
   uint16_t ID = tft.readID();
   tft.begin(ID);
+  tft.setRotation(1);
+  tft.setTextSize(2);
+  tft.setFont(&FreeSans9pt7b);
+
+  drawBoard();
+  drawInfoArea();
+
+  printTurn();
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
-  drawBoard();
-  drawX(25,25);
-  delay(5000);
+  // put your main code here, to run repeatedly: 
 }
 
 // put function definitions here:
-int myFunction(int x, int y) {
-  return x + y;
+void drawBoard(){
+  tft.fillScreen(BLACK);
+  //gora dol
+  tft.fillRoundRect(83,15,5,210,3,WHITE);
+  tft.fillRoundRect(153,15,5,210,3,WHITE);
+  //lewo prawo
+  tft.fillRoundRect(15,83,210,5,3,WHITE);
+  tft.fillRoundRect(15,153,210,5,3,WHITE);
+}
+
+void printTurn(){
+  if(currentPlayer == 'O')
+    tft.setTextColor(O_COLOR);
+  else tft.setTextColor(X_COLOR);
+
+  tft.fillRect(230,0,100,240,WHITE);
+  tft.setCursor(255,50);
+  tft.print(String(currentPlayer));
+  tft.setCursor(245,80);
+  tft.print("turn");
+}
+
+void drawO(uint16_t x,uint16_t y){
+  tft.drawRGBBitmap(x,y,O_img,45,45);
+}
+
+void drawX(uint16_t x,uint16_t y){
+  tft.drawRGBBitmap(x,y,X_img,45,45);
+}
+
+void changePlayer(){
+  if(currentPlayer=='O')
+    currentPlayer = 'X';
+  else currentPlayer = 'O';
 }
