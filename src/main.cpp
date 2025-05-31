@@ -2,22 +2,35 @@
 #include <Adafruit_GFX.h>
 #include <MCUFRIEND_kbv.h>
 #include <TouchScreen.h>
+#include <Adafruit_ILI9341.h>
 
 #include "Fonts/FreeSans9pt7b.h"
 
-#define WHITE 0xFFFF
-#define BLACK 0x0000
-#define BLUE 0x001F
-#define RED 0xF800
-#define GREEN 0x07E0
-#define CYAN 0x07FF
-#define MAGENTA 0xF81F
-#define YELLOW 0xFFE0
 #define O_COLOR 0xA000
 #define X_COLOR 0x1292
 
+#define YP A2
+#define XM A3
+#define YM 8
+#define XP 9
 
+#define TS_MINX 150
+#define TS_MINY 120
+#define TS_MAXX 920
+#define TS_MAXY 940
+
+#define MINPRESSURE 10
+#define MAXPRESSURE 1000
+
+#define TFT_CS 10
+#define TFT_DC 9
+
+#define WIDTH 320
+#define HEIGHT 240
+//Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC);
 MCUFRIEND_kbv tft;
+
+TouchScreen touch = TouchScreen(XP,YP, XM,YM,100);
 
 const uint16_t PROGMEM O_img[2025] ={
 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0020, 0x0800, 0x1800, 0x3800, 0x5800,   // 0x0010 (16) pixels
@@ -287,12 +300,12 @@ char16_t board[3][3] = {
 
 char currentPlayer = 'O';
 
+bool gameEnded = false;
+void resetGame();
+
+
 // put function declarations here:
 void drawBoard();
-
-void drawInfoArea(){
-  tft.fillRect(230,0,100,240,WHITE);
-}
 
 void drawX(uint16_t,uint16_t);
 
@@ -301,6 +314,16 @@ void drawO(uint16_t,uint16_t);
 void printTurn();
 
 void changePlayer();
+
+bool checkWin();
+
+void gameOver(const char* message);
+
+bool isBoardEmpty();
+
+void drawReset();
+
+void move(int,int);
 
 void setup() {
   // put your setup code here, to run once:
@@ -312,24 +335,88 @@ void setup() {
   tft.setFont(&FreeSans9pt7b);
 
   drawBoard();
-  drawInfoArea();
 
   printTurn();
+  checkWin();
 }
 
 void loop() {
-  // put your main code here, to run repeatedly: 
+  TSPoint point = touch.getPoint();
+  pinMode(XM, OUTPUT);
+  pinMode(YP, OUTPUT);
+
+  if(point.z > touch.pressureThreshhold){
+    int x = WIDTH-map(point.x, TS_MAXX, TS_MINX, 0, WIDTH);
+    int y = HEIGHT-map(point.y, TS_MAXY, TS_MINY, 0, HEIGHT);
+
+    Serial.print("X = "); Serial.println(x);
+    Serial.print("\tY = "); Serial.println(y);
+
+    if (gameEnded) {
+        gameEnded = false;
+        if(HEIGHT/6 < x && x <HEIGHT/6+ HEIGHT && WIDTH/8 < y && y < WIDTH/8+WIDTH/8*1.5){
+          drawBoard();
+          printTurn();
+        }
+        if(HEIGHT/6 < x && x <HEIGHT/6+ HEIGHT && WIDTH/8*3.5 < y && y < WIDTH/8*3.5+WIDTH/8*1.5){
+          //exit(0);
+        }
+    }
+    int moves=0;
+    if(x > 95 && x <WIDTH-15 && y>15 && y<HEIGHT-15){
+        move(x,y);
+        moves++;
+      }
+
+  }
+}
+
+void move(int x,int y){
+  int i=0,j=0;
+  
+  if(x>95 && x<165) {i=0; x=105;}
+  else if(x>165 && x<235) {i=1;x=175;}
+  else if(x>235) {i=2;x=245;}
+  if(y<85) {j=0;y=15;}
+  else if(y>85&&y<155) {j=1;y=90;}
+  else if(y>155) {j=2;y=160;}
+  if(board[j][i]=='O' || board[i][j]=='X'){
+    return;
+  }
+  board[i][j]=currentPlayer;
+  if(currentPlayer=='X') drawX(x,y);
+  else drawO(x,y);
+  changePlayer();
+  if (checkWin()) {
+    gameOver(currentPlayer == 'O' ? "Wygrywa O!" : "Wygrywa X!");
+    resetGame();
+  }
+  else if (!isBoardEmpty()) {
+      gameOver("Remis!");
+      resetGame();
+  }
 }
 
 // put function definitions here:
 void drawBoard(){
-  tft.fillScreen(BLACK);
+  tft.fillScreen(ILI9341_BLACK);
   //gora dol
-  tft.fillRoundRect(83,15,5,210,3,WHITE);
-  tft.fillRoundRect(153,15,5,210,3,WHITE);
+  tft.fillRoundRect(WIDTH-83,15,5,210,3,ILI9341_WHITE);
+  tft.fillRoundRect(WIDTH-153,15,5,210,3,ILI9341_WHITE);
   //lewo prawo
-  tft.fillRoundRect(15,83,210,5,3,WHITE);
-  tft.fillRoundRect(15,153,210,5,3,WHITE);
+  tft.fillRoundRect(WIDTH-225,83,210,5,3,ILI9341_WHITE);
+  tft.fillRoundRect(WIDTH-225,153,210,5,3,ILI9341_WHITE);
+}
+
+void drawReset(){
+  tft.setTextColor(ILI9341_WHITE);
+  tft.fillScreen(ILI9341_BLACK);
+  tft.fillRect(HEIGHT/6,WIDTH/8,HEIGHT,WIDTH/8*1.5,ILI9341_DARKGREEN);
+  tft.setCursor(HEIGHT/6+15,WIDTH/8+30);
+  tft.print("Start again");
+  tft.fillRect(HEIGHT/6,WIDTH/8*3.5,HEIGHT,WIDTH/8*1.5,ILI9341_DARKGREEN);
+  tft.setCursor(HEIGHT/6+15,WIDTH/8*3.5+30);
+  tft.print("Exit");
 }
 
 void printTurn(){
@@ -337,10 +424,10 @@ void printTurn(){
     tft.setTextColor(O_COLOR);
   else tft.setTextColor(X_COLOR);
 
-  tft.fillRect(230,0,100,240,WHITE);
-  tft.setCursor(255,50);
+  tft.fillRect(0,0,85,240,ILI9341_WHITE);
+  tft.setCursor(25,50);
   tft.print(String(currentPlayer));
-  tft.setCursor(245,80);
+  tft.setCursor(12,80);
   tft.print("turn");
 }
 
@@ -356,4 +443,46 @@ void changePlayer(){
   if(currentPlayer=='O')
     currentPlayer = 'X';
   else currentPlayer = 'O';
+}
+
+bool checkWin() {
+  bool win=false;
+  for (int i = 0; i < 3; i++) {
+      if (board[i][0] != ' ' && board[i][0] == board[i][1] && board[i][1] == board[i][2]) win= true;
+      if (board[0][i] != ' ' && board[0][i] == board[1][i] && board[1][i] == board[2][i]) win= true;
+  }
+
+  if (board[0][0] != ' ' && board[0][0] == board[1][1] && board[1][1] == board[2][2]) win= true;
+  if (board[0][2] != ' ' && board[0][2] == board[1][1] && board[1][1] == board[2][0]) win= true;
+
+  return win;
+}
+
+bool isBoardEmpty(){
+  bool full=false;
+  for (int i = 0; i < 3; ++i){
+    for (int j = 0; j < 3; ++j){
+      if(board[i][j] != ' '){
+        full=true;
+        gameEnded=true;
+      }
+    }
+  }
+  return full;    
+}
+
+void resetGame() {
+    for (int i = 0; i < 3; ++i)
+        for (int j = 0; j < 3; ++j)
+            board[i][j] = ' ';
+    changePlayer();
+    drawReset();
+}
+
+void gameOver(const char* message) {
+    gameEnded = true;
+    tft.setTextSize(2);
+    tft.setTextColor(ILI9341_RED, ILI9341_BLACK);
+    tft.setCursor(40, 280);
+    tft.print(message);
 }
