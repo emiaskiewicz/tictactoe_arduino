@@ -305,8 +305,6 @@ char currentPlayer = 'O';
 bool gameEnded = false;
 void resetGame();
 
-
-// put function declarations here:
 void drawBoard();
 
 void drawX(uint16_t,uint16_t);
@@ -328,7 +326,6 @@ void drawReset();
 void move(int,int);
 
 void setup() {
-  // put your setup code here, to run once:
   Serial.begin(9600);
   uint16_t ID = tft.readID();
   tft.begin(ID);
@@ -397,13 +394,13 @@ void move(int x,int y){
     else drawO(x,y);
     
     if (checkWin()) {
-      const char* message = currentPlayer == 'O' ? "Wygrywa O!" : "Wygrywa X!";
+      const char* message = currentPlayer == 'O' ? "O won!" : "X won!";
       gameOver(message);
       resetGame();
       return;
     }
     else if (isBoardFull()) {
-        gameOver("Remis!");
+        gameOver("Tie!");
         resetGame();
         return;
     }
@@ -412,7 +409,6 @@ void move(int x,int y){
   }
 }
 
-// put function definitions here:
 void drawBoard(){
   tft.fillScreen(BLACK);
   //gora dol
