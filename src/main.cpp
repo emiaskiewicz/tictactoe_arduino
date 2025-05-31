@@ -319,7 +319,7 @@ bool checkWin();
 
 void gameOver(const char* message);
 
-bool isBoardEmpty();
+bool isBoardFull();
 
 void drawReset();
 
@@ -352,21 +352,24 @@ void loop() {
     Serial.print("X = "); Serial.println(x);
     Serial.print("\tY = "); Serial.println(y);
 
-    if (gameEnded) {
-        gameEnded = false;
-        if(HEIGHT/6 < x && x <HEIGHT/6+ HEIGHT && WIDTH/8 < y && y < WIDTH/8+WIDTH/8*1.5){
-          drawBoard();
-          printTurn();
-        }
-        if(HEIGHT/6 < x && x <HEIGHT/6+ HEIGHT && WIDTH/8*3.5 < y && y < WIDTH/8*3.5+WIDTH/8*1.5){
-          //exit(0);
-        }
-    }
-    int moves=0;
-    if(x > 95 && x <WIDTH-15 && y>15 && y<HEIGHT-15){
-        move(x,y);
-        moves++;
+    if (gameEnded==true) {
+      gameEnded = false;
+      if(HEIGHT/6 < x && x <HEIGHT/6+ HEIGHT && WIDTH/8 < y && y < WIDTH/8+WIDTH/8*1.5){
+        drawBoard();
+        printTurn();
+        delay(1000);
       }
+      if(HEIGHT/6 < x && x <HEIGHT/6+ HEIGHT && WIDTH/8*3.5 < y && y < WIDTH/8*3.5+WIDTH/8*1.5){
+        tft.fillScreen(ILI9341_BLACK);
+        tft.setTextColor(ILI9341_WHITE);
+        tft.setCursor(WIDTH/6,HEIGHT/4);
+        tft.print("Game ended");
+        exit(0);
+      }
+    }
+    if(x > 95 && x <WIDTH-15 && y>15 && y<HEIGHT-15){
+      move(x,y);
+    }
 
   }
 }
@@ -374,7 +377,7 @@ void loop() {
 void move(int x,int y){
   int i=0,j=0;
   
-  if(x>95 && x<165) {i=0; x=105;}
+  if(x>85 && x<165) {i=0; x=100;}
   else if(x>165 && x<235) {i=1;x=175;}
   else if(x>235) {i=2;x=245;}
   if(y<85) {j=0;y=15;}
@@ -386,15 +389,20 @@ void move(int x,int y){
   board[i][j]=currentPlayer;
   if(currentPlayer=='X') drawX(x,y);
   else drawO(x,y);
-  changePlayer();
+  
   if (checkWin()) {
-    gameOver(currentPlayer == 'O' ? "Wygrywa O!" : "Wygrywa X!");
+    const char* message = currentPlayer == 'O' ? "Wygrywa O!" : "Wygrywa X!";
+    gameOver(message);
     resetGame();
+    return;
   }
-  else if (!isBoardEmpty()) {
+  else if (isBoardFull()) {
       gameOver("Remis!");
       resetGame();
+      return;
   }
+  changePlayer();
+  printTurn();
 }
 
 // put function definitions here:
@@ -458,16 +466,18 @@ bool checkWin() {
   return win;
 }
 
-bool isBoardEmpty(){
+bool isBoardFull(){
   bool full=false;
+  int isFull=0;
   for (int i = 0; i < 3; ++i){
     for (int j = 0; j < 3; ++j){
       if(board[i][j] != ' '){
-        full=true;
-        gameEnded=true;
+        isFull++;
       }
     }
   }
+  if(isFull==9)
+    full=true;
   return full;    
 }
 
@@ -481,8 +491,12 @@ void resetGame() {
 
 void gameOver(const char* message) {
     gameEnded = true;
+    tft.fillScreen(ILI9341_BLACK);
     tft.setTextSize(2);
-    tft.setTextColor(ILI9341_RED, ILI9341_BLACK);
-    tft.setCursor(40, 280);
+    if(currentPlayer == 'O')
+      tft.setTextColor(O_COLOR);
+    else tft.setTextColor(X_COLOR);
+    tft.setCursor(WIDTH/4, HEIGHT/3);
     tft.print(message);
+    delay(5000);
 }
