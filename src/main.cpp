@@ -369,8 +369,9 @@ void loop() {
     }
     if(x > 95 && x <WIDTH-15 && y>15 && y<HEIGHT-15){
       move(x,y);
+      delay(200);
     }
-
+delay(100);
   }
 }
 
@@ -383,26 +384,29 @@ void move(int x,int y){
   if(y<85) {j=0;y=15;}
   else if(y>85&&y<155) {j=1;y=90;}
   else if(y>155) {j=2;y=160;}
-  if(board[j][i]=='O' || board[i][j]=='X'){
+  if(board[i][j]=='O' || board[i][j]=='X'){
+    delay(200);
     return;
   }
-  board[i][j]=currentPlayer;
-  if(currentPlayer=='X') drawX(x,y);
-  else drawO(x,y);
-  
-  if (checkWin()) {
-    const char* message = currentPlayer == 'O' ? "Wygrywa O!" : "Wygrywa X!";
-    gameOver(message);
-    resetGame();
-    return;
-  }
-  else if (isBoardFull()) {
-      gameOver("Remis!");
+  else{
+    board[i][j]=currentPlayer;
+    if(currentPlayer=='X') drawX(x,y);
+    else drawO(x,y);
+    
+    if (checkWin()) {
+      const char* message = currentPlayer == 'O' ? "Wygrywa O!" : "Wygrywa X!";
+      gameOver(message);
       resetGame();
       return;
+    }
+    else if (isBoardFull()) {
+        gameOver("Remis!");
+        resetGame();
+        return;
+    }
+    changePlayer();
+    printTurn();
   }
-  changePlayer();
-  printTurn();
 }
 
 // put function definitions here:
@@ -478,6 +482,7 @@ bool isBoardFull(){
   }
   if(isFull==9)
     full=true;
+    delay(1000);
   return full;    
 }
 
