@@ -381,12 +381,12 @@ delay(100);
 void move(int x,int y){
   int i=0,j=0;
   
-  if(x>85 && x<165) {i=0; x=100;}
-  else if(x>165 && x<235) {i=1;x=175;}
-  else if(x>235) {i=2;x=245;}
-  if(y<85) {j=0;y=15;}
-  else if(y>85&&y<155) {j=1;y=90;}
-  else if(y>155) {j=2;y=160;}
+  if(x>100 && x<167) {i=0; x=111;}
+  else if(x>170 && x<237) {i=1;x=181;}
+  else if(x>240) {i=2;x=250;}
+  if(y<83) {j=0;y=26;}
+  else if(y>87&&y<153) {j=1;y=97;}
+  else if(y>157) {j=2;y=168;}
   if(board[i][j]=='O' || board[i][j]=='X'){
     delay(200);
     return;
@@ -419,8 +419,8 @@ void drawBoard(){
   tft.fillRoundRect(WIDTH-83,15,5,210,3,WHITE);
   tft.fillRoundRect(WIDTH-153,15,5,210,3,WHITE);
   //lewo prawo
-  tft.fillRoundRect(WIDTH-225,83,210,5,3,WHITE);
-  tft.fillRoundRect(WIDTH-225,153,210,5,3,WHITE);
+  tft.fillRoundRect(100,83,210,5,3,WHITE);
+  tft.fillRoundRect(100,153,210,5,3,WHITE);
 }
 
 void drawReset(){
