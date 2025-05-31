@@ -2,10 +2,12 @@
 #include <Adafruit_GFX.h>
 #include <MCUFRIEND_kbv.h>
 #include <TouchScreen.h>
-#include <Adafruit_ILI9341.h>
 
 #include "Fonts/FreeSans9pt7b.h"
 
+#define DARKGREEN 0x03E0
+#define BLACK 0x0000
+#define WHITE 0xFFFF
 #define O_COLOR 0xA000
 #define X_COLOR 0x1292
 
@@ -27,7 +29,7 @@
 
 #define WIDTH 320
 #define HEIGHT 240
-//Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC);
+
 MCUFRIEND_kbv tft;
 
 TouchScreen touch = TouchScreen(XP,YP, XM,YM,100);
@@ -360,14 +362,15 @@ void loop() {
         delay(1000);
       }
       if(HEIGHT/6 < x && x <HEIGHT/6+ HEIGHT && WIDTH/8*3.5 < y && y < WIDTH/8*3.5+WIDTH/8*1.5){
-        tft.fillScreen(ILI9341_BLACK);
-        tft.setTextColor(ILI9341_WHITE);
+        tft.fillScreen(BLACK);
+        tft.setTextColor(WHITE);
         tft.setCursor(WIDTH/6,HEIGHT/4);
         tft.print("Game ended");
         exit(0);
       }
+      delay(500);
     }
-    if(x > 95 && x <WIDTH-15 && y>15 && y<HEIGHT-15){
+    else if(x > 95 && x <WIDTH-15 && y>15 && y<HEIGHT-15){
       move(x,y);
       delay(200);
     }
@@ -411,22 +414,22 @@ void move(int x,int y){
 
 // put function definitions here:
 void drawBoard(){
-  tft.fillScreen(ILI9341_BLACK);
+  tft.fillScreen(BLACK);
   //gora dol
-  tft.fillRoundRect(WIDTH-83,15,5,210,3,ILI9341_WHITE);
-  tft.fillRoundRect(WIDTH-153,15,5,210,3,ILI9341_WHITE);
+  tft.fillRoundRect(WIDTH-83,15,5,210,3,WHITE);
+  tft.fillRoundRect(WIDTH-153,15,5,210,3,WHITE);
   //lewo prawo
-  tft.fillRoundRect(WIDTH-225,83,210,5,3,ILI9341_WHITE);
-  tft.fillRoundRect(WIDTH-225,153,210,5,3,ILI9341_WHITE);
+  tft.fillRoundRect(WIDTH-225,83,210,5,3,WHITE);
+  tft.fillRoundRect(WIDTH-225,153,210,5,3,WHITE);
 }
 
 void drawReset(){
-  tft.setTextColor(ILI9341_WHITE);
-  tft.fillScreen(ILI9341_BLACK);
-  tft.fillRect(HEIGHT/6,WIDTH/8,HEIGHT,WIDTH/8*1.5,ILI9341_DARKGREEN);
+  tft.setTextColor(WHITE);
+  tft.fillScreen(BLACK);
+  tft.fillRect(HEIGHT/6,WIDTH/8,HEIGHT,WIDTH/8*1.5,DARKGREEN);
   tft.setCursor(HEIGHT/6+15,WIDTH/8+30);
   tft.print("Start again");
-  tft.fillRect(HEIGHT/6,WIDTH/8*3.5,HEIGHT,WIDTH/8*1.5,ILI9341_DARKGREEN);
+  tft.fillRect(HEIGHT/6,WIDTH/8*3.5,HEIGHT,WIDTH/8*1.5,DARKGREEN);
   tft.setCursor(HEIGHT/6+15,WIDTH/8*3.5+30);
   tft.print("Exit");
 }
@@ -436,7 +439,7 @@ void printTurn(){
     tft.setTextColor(O_COLOR);
   else tft.setTextColor(X_COLOR);
 
-  tft.fillRect(0,0,85,240,ILI9341_WHITE);
+  tft.fillRect(0,0,85,240,WHITE);
   tft.setCursor(25,50);
   tft.print(String(currentPlayer));
   tft.setCursor(12,80);
@@ -480,9 +483,10 @@ bool isBoardFull(){
       }
     }
   }
-  if(isFull==9)
+  if(isFull==9){
     full=true;
     delay(1000);
+  }
   return full;    
 }
 
@@ -496,7 +500,7 @@ void resetGame() {
 
 void gameOver(const char* message) {
     gameEnded = true;
-    tft.fillScreen(ILI9341_BLACK);
+    tft.fillScreen(BLACK);
     tft.setTextSize(2);
     if(currentPlayer == 'O')
       tft.setTextColor(O_COLOR);
